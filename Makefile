@@ -9,4 +9,4 @@ lint-yaml:
 	yamllint .
 
 lint-ansible:
-	ansible-lint playbooks roles inventories/production/hosts.yml
+	ansible-lint playbooks/patching_only.yml playbooks/hardening_only.yml roles inventories/production/hosts.yml

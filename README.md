@@ -28,6 +28,12 @@ make lint   # yamllint + ansible-lint
 make test   # tests structurels (pytest)
 ```
 
+> Note: `make lint` couvre les rôles et les playbooks unitaires (`patching_only`, `hardening_only`).
+
+## CI GitHub Actions
+- Pipeline `CI` exécutée sur `push` (branche `main`) et `pull_request`.
+- Jobs séparés: `lint` (`make lint`) et `tests` (`make test`).
+
 ## Exécution type
 ```bash
 ansible-playbook -i inventories/production/hosts.yml playbooks/site_ring_rollout.yml \
