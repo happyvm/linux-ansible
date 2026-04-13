@@ -1,13 +1,41 @@
 ---
-- name: Detect reboot requirement (RPM based)
+- name: Detect reboot requirement (Debian families)
   ansible.builtin.stat:
     path: /var/run/reboot-required
   register: reboot_required_flag
-  when: os_family_normalized in ['debian', 'ubuntu']
+  when:
+    - reboot_manager_enabled | default(true) | bool
+    - os_family_normalized in ['debian', 'ubuntu']
 
 - name: Reboot when required on Debian families
   ansible.builtin.reboot:
     reboot_timeout: "{{ reboot_timeout }}"
   when:
+    - reboot_manager_enabled | default(true) | bool
     - os_family_normalized in ['debian', 'ubuntu']
     - reboot_required_flag.stat.exists
+
+- name: Detect reboot requirement (RPM families)
+  ansible.builtin.command: needs-restarting -r
+  register: rpm_reboot_check
+  changed_when: false
+  failed_when: rpm_reboot_check.rc not in [0, 1, 127]
+  when:
+    - reboot_manager_enabled | default(true) | bool
+    - os_family_normalized in ['redhat', 'centos', 'rocky', 'almalinux']
+
+- name: Warn when reboot detection helper is missing on RPM families
+  ansible.builtin.debug:
+    msg: "needs-restarting command missing; unable to auto-detect reboot requirement on {{ inventory_hostname }}"
+  when:
+    - reboot_manager_enabled | default(true) | bool
+    - os_family_normalized in ['redhat', 'centos', 'rocky', 'almalinux']
+    - rpm_reboot_check.rc == 127
+
+- name: Reboot when required on RPM families
+  ansible.builtin.reboot:
+    reboot_timeout: "{{ reboot_timeout }}"
+  when:
+    - reboot_manager_enabled | default(true) | bool
+    - os_family_normalized in ['redhat', 'centos', 'rocky', 'almalinux']
+    - rpm_reboot_check.rc == 1

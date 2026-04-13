@@ -1,6 +1,7 @@
 ---
-- name: Skip host when hardening disabled
-  ansible.builtin.meta: end_host
+- name: Skip hardening stack when hardening is disabled
+  ansible.builtin.debug:
+    msg: "Hardening disabled for {{ inventory_hostname }} (hardening_enabled=false)"
   when: not hardening_enabled | bool
 
 - name: Resolve hardening profile by compatibility
@@ -11,7 +12,9 @@
         if hardening_profile_mode != 'auto'
         else hardening_profiles.get(os_family_normalized, {}).get(os_major, 'minimal')
       }}
+  when: hardening_enabled | bool
 
 - name: Apply hardening engine
   ansible.builtin.include_role:
     name: hardening_engine
+  when: hardening_enabled | bool
