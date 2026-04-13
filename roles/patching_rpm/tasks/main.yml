@@ -14,7 +14,7 @@
     state: latest
     update_only: true
   when:
-    - os_family_normalized == 'redhat'
+    - os_family_normalized in ['redhat', 'rocky', 'almalinux']
     - resolved_os_support_tier == 'current'
     - os_major in ['8', '9', '10']
 
