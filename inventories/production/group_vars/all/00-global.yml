@@ -1,0 +1,62 @@
+---
+# Métadonnées minimales
+application_id: null
+application_family: null
+environment_type: null
+site: null
+resource_class: null
+
+# Contrôles opérationnels
+patching_enabled: true
+hardening_enabled: true
+hardening_mode: enforce
+allow_obsolete_os: false
+allow_vault_repos: false
+os_support_tier: auto
+risk_acknowledged: false
+hardening_profile_mode: auto
+
+# Déploiement progressif
+rollout_serial_by_ring:
+  0: 100%
+  1: 40%
+  2: 25%
+  3: 15%
+  4: 10%
+rollout_max_fail_percentage_by_ring:
+  0: 50
+  1: 30
+  2: 20
+  3: 10
+  4: 5
+
+# Mapping environment -> ring (obligatoire)
+environment_ring_map:
+  dev: 0
+  test: 1
+  preprod: 2
+  prod_standard: 3
+  prod_critical: 4
+
+# Classification support OS
+os_support_tiers:
+  redhat:
+    "10": current
+    "9": current
+    "8": current
+    "7": legacy
+    "6": obsolete
+  centos:
+    "7": obsolete
+    "6": obsolete
+  debian:
+    "12": current
+    "11": current
+    "10": legacy
+    "9": obsolete
+
+# Politique de hardening par tier
+hardening_mode_policy:
+  current: enforce
+  legacy: audit
+  obsolete: audit

@@ -1,0 +1,4 @@
+---
+hardening_cis_level: 1
+hardening_apply_anssi_overlay: true
+hardening_apply_internal_overlay: true

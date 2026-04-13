@@ -1,0 +1,19 @@
+---
+# Overlay ANSSI/interne par type ressource + famille applicative
+hardening_overlay_matrix:
+  db:
+    baseline:
+      - disable_unused_services
+      - enforce_password_policy
+      - tune_kernel_network
+    finance:
+      - strict_auditd_rules
+      - crypto_policy_high
+  app:
+    baseline:
+      - disable_unused_services
+      - file_permissions_baseline
+  web:
+    baseline:
+      - tls_baseline
+      - file_permissions_baseline

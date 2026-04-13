@@ -1,0 +1,31 @@
+---
+- name: Build host report payload
+  ansible.builtin.set_fact:
+    host_report:
+      host: "{{ inventory_hostname }}"
+      application_id: "{{ application_id }}"
+      application_family: "{{ application_family }}"
+      site: "{{ site }}"
+      environment_type: "{{ environment_type }}"
+      ring: "{{ resolved_ring }}"
+      os_family: "{{ os_family_normalized }}"
+      os_major: "{{ os_major }}"
+      support_tier: "{{ resolved_os_support_tier }}"
+      hardening_mode: "{{ resolved_hardening_mode }}"
+      hardening_profile: "{{ resolved_hardening_profile | default('n/a') }}"
+      risk_level: "{{ resolved_risk_level }}"
+      warnings: >-
+        {{
+          ['OBSOLETE_OS_SUPPORT_LIMITED'] if resolved_os_support_tier == 'obsolete' else []
+        }}
+
+- name: Display host report
+  ansible.builtin.debug:
+    var: host_report
+
+- name: Persist host report on controller
+  ansible.builtin.copy:
+    dest: "{{ report_output_dir }}/{{ inventory_hostname }}.json"
+    content: "{{ host_report | to_nice_json }}"
+    mode: '0640'
+  delegate_to: localhost

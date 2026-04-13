@@ -1,0 +1,26 @@
+---
+- name: Linux platform rollout - site then ring
+  hosts: all
+  gather_facts: true
+  any_errors_fatal: false
+  serial: "{{ rollout_serial_by_ring[target_ring | int] | default('20%') }}"
+  max_fail_percentage: "{{ rollout_max_fail_percentage_by_ring[target_ring | int] | default(10) }}"
+
+  pre_tasks:
+    - name: Ensure target filters are provided
+      ansible.builtin.assert:
+        that:
+          - target_site is defined
+          - target_ring is defined
+        fail_msg: "Provide -e target_site=<site_x> -e target_ring=<0..4>"
+      run_once: true
+
+    - name: Filter hosts by site
+      ansible.builtin.meta: end_host
+      when: site | default('') != target_site
+
+  roles:
+    - role: context_resolver
+    - role: patching_common
+    - role: hardening_selector
+    - role: reporting

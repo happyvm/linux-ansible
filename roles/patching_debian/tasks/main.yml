@@ -1,0 +1,20 @@
+---
+- name: Refresh apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Upgrade Debian packages
+  ansible.builtin.apt:
+    upgrade: "{{ 'dist' if debian_full_upgrade else 'safe' }}"
+  when: resolved_os_support_tier == 'current'
+
+- name: Legacy Debian patching
+  ansible.builtin.apt:
+    upgrade: safe
+  when: resolved_os_support_tier == 'legacy'
+
+- name: Obsolete Debian best-effort patching
+  ansible.builtin.apt:
+    upgrade: safe
+  when: resolved_os_support_tier == 'obsolete'

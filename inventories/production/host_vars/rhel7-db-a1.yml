@@ -1,0 +1,9 @@
+---
+application_id: app031
+application_family: finance
+environment_type: prod_critical
+site: site_a
+resource_class: db
+os_family_normalized: redhat
+os_major: 7
+hardening_mode: audit

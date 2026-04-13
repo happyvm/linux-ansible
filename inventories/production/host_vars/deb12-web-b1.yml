@@ -1,0 +1,8 @@
+---
+application_id: app112
+application_family: digital
+environment_type: prod_standard
+site: site_b
+resource_class: web
+os_family_normalized: debian
+os_major: 12

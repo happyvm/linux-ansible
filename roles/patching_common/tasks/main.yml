@@ -1,0 +1,19 @@
+---
+- name: Skip host when patching is disabled
+  ansible.builtin.meta: end_host
+  when: not patching_enabled | bool
+
+- name: Run RPM patching stack
+  ansible.builtin.include_role:
+    name: patching_rpm
+  when: os_family_normalized in ['redhat', 'centos', 'rocky', 'almalinux']
+
+- name: Run Debian patching stack
+  ansible.builtin.include_role:
+    name: patching_debian
+  when: os_family_normalized in ['debian', 'ubuntu']
+
+- name: Reboot manager
+  ansible.builtin.include_role:
+    name: reboot_manager
+  when: patching_reboot_enabled | bool

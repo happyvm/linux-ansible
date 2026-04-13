@@ -1,0 +1,8 @@
+---
+application_id: app001
+application_family: erp
+environment_type: dev
+site: site_a
+resource_class: app
+os_family_normalized: redhat
+os_major: 9

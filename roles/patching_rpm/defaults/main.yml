@@ -1,0 +1,3 @@
+---
+rpm_security_only_on_legacy: true
+rpm_best_effort_on_obsolete: true

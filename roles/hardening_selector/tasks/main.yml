@@ -1,0 +1,17 @@
+---
+- name: Skip host when hardening disabled
+  ansible.builtin.meta: end_host
+  when: not hardening_enabled | bool
+
+- name: Resolve hardening profile by compatibility
+  ansible.builtin.set_fact:
+    resolved_hardening_profile: >-
+      {{
+        hardening_profile_mode
+        if hardening_profile_mode != 'auto'
+        else hardening_profiles.get(os_family_normalized, {}).get(os_major, 'minimal')
+      }}
+
+- name: Apply hardening engine
+  ansible.builtin.include_role:
+    name: hardening_engine

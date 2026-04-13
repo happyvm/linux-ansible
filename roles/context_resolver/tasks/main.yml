@@ -1,0 +1,59 @@
+---
+- name: Validate required host metadata
+  ansible.builtin.assert:
+    that: "vars[item] is defined and vars[item] not in [None, '']"
+    fail_msg: "Missing mandatory metadata: {{ item }}"
+  loop: "{{ required_host_metadata }}"
+
+- name: Resolve os_family_normalized and os_major automatically when absent
+  ansible.builtin.set_fact:
+    os_family_normalized: "{{ os_family_normalized | default(ansible_os_family | lower) | lower }}"
+    os_major: "{{ os_major | default(ansible_distribution_major_version) | string }}"
+
+- name: Resolve ring from environment type
+  ansible.builtin.set_fact:
+    resolved_ring: "{{ environment_ring_map[environment_type] | int }}"
+
+- name: Enforce ring targeting consistency
+  ansible.builtin.assert:
+    that:
+      - resolved_ring == (target_ring | int)
+    fail_msg: "Host ring={{ resolved_ring }} incompatible with target_ring={{ target_ring }}"
+
+- name: Resolve support tier
+  ansible.builtin.set_fact:
+    resolved_os_support_tier: >-
+      {{
+        os_support_tier if os_support_tier != 'auto'
+        else os_support_tiers.get(os_family_normalized, {}).get(os_major, 'obsolete')
+      }}
+
+- name: Guardrail obsolete OS requires explicit risk acknowledgment
+  ansible.builtin.assert:
+    that:
+      - allow_obsolete_os | bool
+      - risk_acknowledged | bool
+    fail_msg: >-
+      Host {{ inventory_hostname }} is obsolete; set allow_obsolete_os=true and risk_acknowledged=true explicitly.
+  when: resolved_os_support_tier == 'obsolete'
+
+- name: Resolve hardening mode with policy fallback
+  ansible.builtin.set_fact:
+    resolved_hardening_mode: >-
+      {{
+        hardening_mode
+        if hardening_mode in ['audit', 'enforce']
+        else hardening_mode_policy[resolved_os_support_tier]
+      }}
+
+- name: Guardrail enforce on legacy/obsolete can be disabled
+  ansible.builtin.set_fact:
+    resolved_hardening_mode: audit
+  when:
+    - resolved_os_support_tier in ['legacy', 'obsolete']
+    - resolved_hardening_mode == 'enforce'
+
+- name: Build risk level
+  ansible.builtin.set_fact:
+    resolved_risk_level: >-
+      {{ 'high' if resolved_os_support_tier == 'obsolete' else ('medium' if resolved_os_support_tier == 'legacy' else 'standard') }}
