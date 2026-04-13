@@ -1,0 +1,8 @@
+---
+- name: Hardening only
+  hosts: all
+  gather_facts: true
+  roles:
+    - role: context_resolver
+    - role: hardening_selector
+    - role: reporting

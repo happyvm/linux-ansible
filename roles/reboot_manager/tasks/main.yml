@@ -1,0 +1,13 @@
+---
+- name: Detect reboot requirement (RPM based)
+  ansible.builtin.stat:
+    path: /var/run/reboot-required
+  register: reboot_required_flag
+  when: os_family_normalized in ['debian', 'ubuntu']
+
+- name: Reboot when required on Debian families
+  ansible.builtin.reboot:
+    reboot_timeout: "{{ reboot_timeout }}"
+  when:
+    - os_family_normalized in ['debian', 'ubuntu']
+    - reboot_required_flag.stat.exists

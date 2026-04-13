@@ -1,0 +1,7 @@
+---
+required_host_metadata:
+  - application_id
+  - application_family
+  - environment_type
+  - site
+  - resource_class

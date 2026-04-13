@@ -1,0 +1,16 @@
+---
+hardening_profiles:
+  redhat:
+    "10": modern
+    "9": modern
+    "8": modern
+    "7": legacy
+    "6": minimal
+  centos:
+    "7": minimal
+    "6": minimal
+  debian:
+    "12": modern
+    "11": modern
+    "10": legacy
+    "9": minimal

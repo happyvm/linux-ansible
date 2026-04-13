@@ -1,0 +1,11 @@
+---
+application_id: app220
+application_family: legacy
+environment_type: prod_critical
+site: site_b
+resource_class: app
+os_family_normalized: centos
+os_major: 7
+allow_vault_repos: true
+risk_acknowledged: true
+hardening_profile_mode: minimal

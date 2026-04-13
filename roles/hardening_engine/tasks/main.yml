@@ -1,0 +1,28 @@
+---
+- name: Hardening audit mode banner
+  ansible.builtin.debug:
+    msg: "Hardening audit mode for {{ inventory_hostname }} with profile={{ resolved_hardening_profile }}"
+  when: resolved_hardening_mode == 'audit'
+
+- name: Hardening enforce mode banner
+  ansible.builtin.debug:
+    msg: "Hardening enforce mode for {{ inventory_hostname }} with profile={{ resolved_hardening_profile }}"
+  when: resolved_hardening_mode == 'enforce'
+
+- name: Compute overlays set
+  ansible.builtin.set_fact:
+    resolved_overlays: >-
+      {{
+        (hardening_overlay_matrix.get(resource_class, {}).get('baseline', []))
+        + (hardening_overlay_matrix.get(resource_class, {}).get(application_family, []))
+      }}
+
+- name: Apply CIS baseline (placeholder)
+  ansible.builtin.debug:
+    msg: "Apply CIS profile={{ resolved_hardening_profile }} level={{ hardening_cis_level }}"
+
+- name: Apply ANSSI/internal overlays (placeholder)
+  ansible.builtin.debug:
+    msg: "Applying overlays={{ resolved_overlays | unique }}"
+  when:
+    - hardening_apply_anssi_overlay | bool or hardening_apply_internal_overlay | bool

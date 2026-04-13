@@ -1,0 +1,48 @@
+---
+- name: Validate CentOS vault usage on obsolete families
+  ansible.builtin.assert:
+    that:
+      - allow_vault_repos | bool
+    fail_msg: "CentOS {{ os_major }} requires allow_vault_repos=true for archived/vault repositories"
+  when:
+    - os_family_normalized == 'centos'
+    - os_major in ['6', '7']
+
+- name: Standard RPM patching for current RHEL 8/9/10
+  ansible.builtin.dnf:
+    name: "*"
+    state: latest
+    update_only: true
+  when:
+    - os_family_normalized == 'redhat'
+    - resolved_os_support_tier == 'current'
+    - os_major in ['8', '9', '10']
+
+- name: Legacy RPM patching for RHEL 7
+  ansible.builtin.yum:
+    name: "*"
+    state: latest
+    security: "{{ rpm_security_only_on_legacy }}"
+  when:
+    - os_family_normalized == 'redhat'
+    - os_major == '7'
+    - resolved_os_support_tier == 'legacy'
+
+- name: Restrictive legacy/obsolete patching for RHEL 6
+  ansible.builtin.yum:
+    name: "*"
+    state: latest
+    security: true
+  when:
+    - os_family_normalized == 'redhat'
+    - os_major == '6'
+    - resolved_os_support_tier in ['legacy', 'obsolete']
+
+- name: Best effort patching for obsolete CentOS 6/7
+  ansible.builtin.yum:
+    name: "*"
+    state: latest
+  when:
+    - os_family_normalized == 'centos'
+    - os_major in ['6', '7']
+    - rpm_best_effort_on_obsolete | bool
