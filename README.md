@@ -21,6 +21,13 @@ Base de repository Ansible **production-ready** pour le patching Linux et le har
 - `roles/reporting`: rapport final consolidé.
 - `docs/`: conventions d’architecture et modèle de données.
 
+## Qualité & vérifications
+```bash
+python -m pip install -r requirements-dev.txt
+make lint   # yamllint + ansible-lint
+make test   # tests structurels (pytest)
+```
+
 ## Exécution type
 ```bash
 ansible-playbook -i inventories/production/hosts.yml playbooks/site_ring_rollout.yml \
