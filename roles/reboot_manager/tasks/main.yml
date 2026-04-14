@@ -15,22 +15,43 @@
     - os_family_normalized in ['debian', 'ubuntu']
     - reboot_required_flag.stat.exists
 
-- name: Detect reboot requirement (RPM families)
-  ansible.builtin.command: needs-restarting -r
-  register: rpm_reboot_check
+- name: Check needs-restarting availability (RPM families)
+  ansible.builtin.command: command -v needs-restarting
+  register: needs_restarting_bin
   changed_when: false
-  failed_when: rpm_reboot_check.rc not in [0, 1, 127]
+  failed_when: false
   when:
     - reboot_manager_enabled | default(true) | bool
     - os_family_normalized in ['redhat', 'centos', 'rocky', 'almalinux']
 
-- name: Warn when reboot detection helper is missing on RPM families
-  ansible.builtin.debug:
-    msg: "needs-restarting command missing; unable to auto-detect reboot requirement on {{ inventory_hostname }}"
+- name: Detect reboot requirement (RPM families)
+  ansible.builtin.command: needs-restarting -r
+  register: rpm_reboot_check
+  changed_when: false
+  failed_when: rpm_reboot_check.rc not in [0, 1]
   when:
     - reboot_manager_enabled | default(true) | bool
     - os_family_normalized in ['redhat', 'centos', 'rocky', 'almalinux']
-    - rpm_reboot_check.rc == 127
+    - needs_restarting_bin.rc == 0
+
+- name: Fallback reboot detection flag when needs-restarting is absent
+  ansible.builtin.stat:
+    path: /var/run/reboot-required
+  register: rpm_reboot_required_fallback
+  when:
+    - reboot_manager_enabled | default(true) | bool
+    - os_family_normalized in ['redhat', 'centos', 'rocky', 'almalinux']
+    - needs_restarting_bin.rc != 0
+
+- name: Warn when reboot detection helper is missing on RPM families
+  ansible.builtin.debug:
+    msg: >-
+      needs-restarting command missing; using fallback marker /var/run/reboot-required
+      on {{ inventory_hostname }}.
+  when:
+    - reboot_manager_enabled | default(true) | bool
+    - os_family_normalized in ['redhat', 'centos', 'rocky', 'almalinux']
+    - needs_restarting_bin.rc != 0
 
 - name: Reboot when required on RPM families
   ansible.builtin.reboot:
@@ -38,4 +59,5 @@
   when:
     - reboot_manager_enabled | default(true) | bool
     - os_family_normalized in ['redhat', 'centos', 'rocky', 'almalinux']
-    - rpm_reboot_check.rc == 1
+    - (needs_restarting_bin.rc == 0 and rpm_reboot_check.rc == 1)
+      or (needs_restarting_bin.rc != 0 and rpm_reboot_required_fallback.stat.exists | default(false))

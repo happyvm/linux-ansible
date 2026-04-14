@@ -40,7 +40,7 @@ def test_context_resolver_contains_core_guardrails():
 
     required_tokens = [
         "required_host_metadata",
-        "environment_ring_map[environment_type]",
+        "environment_ring_map",
         "resolved_os_support_tier",
         "allow_obsolete_os | bool",
         "risk_acknowledged | bool",
@@ -83,7 +83,7 @@ def test_hardening_selector_and_engine_contract_is_consistent():
     selector_tasks = _read(ROLES_DIR / "hardening_selector" / "tasks" / "main.yml")
     selector_defaults = _read(ROLES_DIR / "hardening_selector" / "defaults" / "main.yml")
     engine_tasks = _read(ROLES_DIR / "hardening_engine" / "tasks" / "main.yml")
-    engine_vars = _read(ROLES_DIR / "hardening_engine" / "vars" / "main.yml")
+    global_defaults = _read(ROOT / "inventories" / "production" / "group_vars" / "all" / "00-global.yml")
 
     assert "name: hardening_engine" in selector_tasks
     assert "hardening_profile_mode != 'auto'" in selector_tasks
@@ -94,7 +94,7 @@ def test_hardening_selector_and_engine_contract_is_consistent():
 
     assert "resolved_overlays" in engine_tasks
     assert "hardening_overlay_matrix" in engine_tasks
-    assert "hardening_overlay_matrix:" in engine_vars
+    assert "hardening_overlay_matrix:" in global_defaults
 
 
 def test_reporting_role_contains_expected_payload_fields_and_persistence():

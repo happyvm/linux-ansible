@@ -1,0 +1,19 @@
+---
+- name: Hardening mode banner
+  ansible.builtin.debug:
+    msg: "Hardening {{ resolved_hardening_mode }} mode for {{ inventory_hostname }} with profile={{ resolved_hardening_profile }}"
+
+- name: Collect package facts for CIS prechecks
+  ansible.builtin.package_facts:
+    manager: auto
+
+- name: Build CIS execution plan
+  ansible.builtin.set_fact:
+    hardening_cis_plan:
+      profile: "{{ resolved_hardening_profile }}"
+      level: "{{ hardening_cis_level }}"
+      ssh_package_present: "{{ ('openssh-server' in ansible_facts.packages) or ('openssh' in ansible_facts.packages) }}"
+
+- name: Report CIS execution plan
+  ansible.builtin.debug:
+    var: hardening_cis_plan

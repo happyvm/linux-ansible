@@ -5,3 +5,6 @@ required_host_metadata:
   - environment_type
   - site
   - resource_class
+
+# auto: rollout si target_ring est fourni, sinon standalone
+context_resolver_mode: auto
