@@ -1,0 +1,11 @@
+---
+- name: Build overlay execution plan
+  ansible.builtin.set_fact:
+    hardening_overlay_plan:
+      overlays: "{{ resolved_overlays | unique }}"
+      apply_anssi: "{{ hardening_apply_anssi_overlay | bool }}"
+      apply_internal: "{{ hardening_apply_internal_overlay | bool }}"
+
+- name: Report overlay execution plan
+  ansible.builtin.debug:
+    var: hardening_overlay_plan

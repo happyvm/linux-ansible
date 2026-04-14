@@ -2,6 +2,8 @@
 - name: Patching only
   hosts: all
   gather_facts: true
+  vars:
+    context_resolver_mode: standalone
   roles:
     - role: context_resolver
     - role: patching_common

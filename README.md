@@ -47,5 +47,5 @@ ansible-playbook -i inventories/production/hosts.yml playbooks/site_ring_rollout
 - Hardening enforce désactivable automatiquement pour legacy/obsolete selon politique.
 
 ## Statut actuel du hardening
-- Le rôle `hardening_engine` est actuellement un **placeholder** (bannières + calcul d'overlays), sans remédiations système effectives.
-- Le dépôt fournit la structure, le routing et les garde-fous; les tâches de conformité doivent encore être branchées dans ce moteur.
+- Le rôle `hardening_engine` reste un **placeholder** côté remédiations, mais fournit désormais des sous-tâches structurées (`cis.yml`, `overlays.yml`) et des préchecks exploitables.
+- Le dépôt fournit la structure, le routing et les garde-fous; les tâches de conformité système (CIS/ANSSI/interne) sont à brancher progressivement dans ce moteur.

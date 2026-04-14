@@ -9,12 +9,12 @@ resource_class: null
 # Contrôles opérationnels
 patching_enabled: true
 hardening_enabled: true
-hardening_mode: enforce
+hardening_mode: auto
+hardening_profile_mode: auto
+os_support_tier: auto
 allow_obsolete_os: false
 allow_vault_repos: false
-os_support_tier: auto
 risk_acknowledged: false
-hardening_profile_mode: auto
 
 # Déploiement progressif
 rollout_serial_by_ring:
@@ -30,7 +30,7 @@ rollout_max_fail_percentage_by_ring:
   3: 10
   4: 5
 
-# Mapping environment -> ring (obligatoire)
+# Mapping environment -> ring
 environment_ring_map:
   dev: 0
   test: 1
@@ -46,6 +46,12 @@ os_support_tiers:
     "8": current
     "7": legacy
     "6": obsolete
+  rocky:
+    "9": current
+    "8": current
+  almalinux:
+    "9": current
+    "8": current
   centos:
     "7": obsolete
     "6": obsolete
@@ -54,9 +60,33 @@ os_support_tiers:
     "11": current
     "10": legacy
     "9": obsolete
+  ubuntu:
+    "24": current
+    "22": current
+    "20": legacy
+    "18": obsolete
 
 # Politique de hardening par tier
 hardening_mode_policy:
   current: enforce
   legacy: audit
   obsolete: audit
+
+# Overlay ANSSI/interne par type ressource + famille applicative
+hardening_overlay_matrix:
+  db:
+    baseline:
+      - disable_unused_services
+      - enforce_password_policy
+      - tune_kernel_network
+    finance:
+      - strict_auditd_rules
+      - crypto_policy_high
+  app:
+    baseline:
+      - disable_unused_services
+      - file_permissions_baseline
+  web:
+    baseline:
+      - tls_baseline
+      - file_permissions_baseline

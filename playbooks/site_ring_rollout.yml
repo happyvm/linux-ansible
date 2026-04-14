@@ -2,6 +2,8 @@
 - name: Linux platform rollout - site then ring
   hosts: all
   gather_facts: true
+  vars:
+    context_resolver_mode: rollout
   any_errors_fatal: false
   serial: "{{ rollout_serial_by_ring[target_ring | int] | default('20%') }}"
   max_fail_percentage: "{{ rollout_max_fail_percentage_by_ring[target_ring | int] | default(10) }}"

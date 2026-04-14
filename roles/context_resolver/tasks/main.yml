@@ -1,30 +1,72 @@
 ---
 - name: Validate required host metadata
   ansible.builtin.assert:
-    that: "vars[item] is defined and vars[item] not in [None, '']"
-    fail_msg: "Missing mandatory metadata: {{ item }}"
-  loop: "{{ required_host_metadata }}"
+    that:
+      - vars[item] is defined
+      - vars[item] not in [None, '']
+    fail_msg: "Missing mandatory metadata '{{ item }}' for host {{ inventory_hostname }}"
+  loop: "{{ required_host_metadata | default([]) }}"
+
+- name: Resolve context_resolver execution mode
+  ansible.builtin.set_fact:
+    context_resolver_effective_mode: >-
+      {{
+        context_resolver_mode
+        if context_resolver_mode in ['rollout', 'standalone']
+        else ('rollout' if target_ring is defined else 'standalone')
+      }}
+
+- name: Validate context_resolver execution mode
+  ansible.builtin.assert:
+    that:
+      - context_resolver_effective_mode in ['rollout', 'standalone']
+    fail_msg: >-
+      Invalid context_resolver_mode='{{ context_resolver_mode | default('undefined') }}'.
+      Allowed values: auto, rollout, standalone.
 
 - name: Resolve os_family_normalized and os_major automatically when absent
   ansible.builtin.set_fact:
     os_family_normalized: "{{ os_family_normalized | default(ansible_os_family | lower) | lower }}"
     os_major: "{{ os_major | default(ansible_distribution_major_version) | string }}"
 
-- name: Resolve ring from environment type
-  ansible.builtin.set_fact:
-    resolved_ring: "{{ environment_ring_map[environment_type] | int }}"
-
-- name: Enforce ring targeting consistency
+- name: Validate environment -> ring mapping availability
   ansible.builtin.assert:
     that:
+      - environment_ring_map is mapping
+      - environment_type is defined
+      - environment_ring_map.get(environment_type) is not none
+    fail_msg: >-
+      Missing ring mapping for environment_type='{{ environment_type | default('undefined') }}'.
+      Expected key in environment_ring_map.
+
+- name: Resolve ring from environment type
+  ansible.builtin.set_fact:
+    resolved_ring: "{{ environment_ring_map.get(environment_type) | int }}"
+
+- name: Enforce ring targeting consistency in rollout mode
+  ansible.builtin.assert:
+    that:
+      - target_ring is defined
       - resolved_ring == (target_ring | int)
-    fail_msg: "Host ring={{ resolved_ring }} incompatible with target_ring={{ target_ring }}"
+    fail_msg: >-
+      Host ring='{{ resolved_ring }}' incompatible with target_ring='{{ target_ring | default('undefined') }}'.
+      Run with -e target_ring=<0..4> or switch context_resolver_mode=standalone.
+  when: context_resolver_effective_mode == 'rollout'
+
+- name: Validate OS support tier mapping availability
+  ansible.builtin.assert:
+    that:
+      - os_support_tiers is mapping
+      - os_support_tiers.get(os_family_normalized) is mapping
+    fail_msg: >-
+      Missing os_support_tiers mapping for os_family_normalized='{{ os_family_normalized }}'.
+      Define os_support_tiers.{{ os_family_normalized }} in global defaults/inventory.
 
 - name: Resolve support tier
   ansible.builtin.set_fact:
     resolved_os_support_tier: >-
       {{
-        os_support_tier if os_support_tier != 'auto'
+        os_support_tier if (os_support_tier | default('auto')) != 'auto'
         else os_support_tiers.get(os_family_normalized, {}).get(os_major, 'obsolete')
       }}
 
@@ -37,13 +79,22 @@
       Host {{ inventory_hostname }} is obsolete; set allow_obsolete_os=true and risk_acknowledged=true explicitly.
   when: resolved_os_support_tier == 'obsolete'
 
+- name: Validate hardening policy mapping availability
+  ansible.builtin.assert:
+    that:
+      - hardening_mode_policy is mapping
+      - hardening_mode_policy.get(resolved_os_support_tier) is not none
+    fail_msg: >-
+      Missing hardening_mode_policy key for tier='{{ resolved_os_support_tier }}'.
+      Expected one of {{ hardening_mode_policy.keys() | list if hardening_mode_policy is mapping else [] }}.
+
 - name: Resolve hardening mode with policy fallback
   ansible.builtin.set_fact:
     resolved_hardening_mode: >-
       {{
         hardening_mode
-        if hardening_mode in ['audit', 'enforce']
-        else hardening_mode_policy[resolved_os_support_tier]
+        if (hardening_mode | default('auto')) in ['audit', 'enforce']
+        else hardening_mode_policy.get(resolved_os_support_tier)
       }}
 
 - name: Guardrail enforce on legacy/obsolete can be disabled
